@@ -1,0 +1,1 @@
+You need this folder to store the generated data.
