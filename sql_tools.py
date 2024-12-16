@@ -1,17 +1,7 @@
 from langchain_community.utilities import SQLDatabase
 from langchain.chains import create_sql_query_chain
 from pathlib import Path
-import logging
-
-#####
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler()         # Shows logs
-    ]
-)
+from logger.logger import generate_log
 
 #####
 
@@ -29,15 +19,34 @@ class Database:
 
     def _check_file(self) -> bool:
         """
-        Takes a string path, turns it into Path object for better control and checks existence and correct suffix.
-
-        Args:
-            self : the Database object
-                self.path (str): The path attribute.
-        
+        Validates the existence of a file via its path and suffix.
+            
         Returns:
-            bool True: The file is fine.
-            bool False: There's an error with the file
+            bool:
+                - 'True' if the file exists and its suffix is valid.
+
+        Raises:
+            FileNotFoundError: If the file does not exist at a specified path.
+            ValueError: If the file suffix is not supported or not valid.
+        
+        Example:
+            >>> self.path("example.db")
+            >>> self.suffix(".db")
+            >>> self.suffix_list = [".db", ".sqlite"]
+            >>> self._check_file()
+            >>> True
+
+        # If the file does not exist:
+            >>> self.path = Path("nonexistent.db")
+            >>> self._check_file()
+            FileNotFoundError: File at nonexistent.db not found...
+
+        # If the suffix is unsupported:
+            >>> self.path = Path("example.txt")
+            >>> self._check_file()
+            ValueError: Database file suffix is not supported...
+                    Expected suffixes: ['.db', '.sqlite'].
+                    Given suffix: .txt
         """
         if self.path.exists():
             if self.suffix in self.suffix_list:
@@ -48,10 +57,14 @@ class Database:
             raise FileNotFoundError(f"File at {self.path} not found...")
         
     def _load_db(self) -> SQLDatabase:
-        """Loads SQL database into a Langchain object."""
+        """
+        Loads SQL database into a Langchain SQLDatabase object.
+        
+        Returns: 
+        """
         if self.file_exist:
             if self.type == "sqlite":
-                logging.info(f"Database Langchain object successfuly created: {self.path}")
+                generate_log(1, f"Database Langchain object successfuly created: {self.path}")
                 return SQLDatabase.from_uri(f"sqlite:///{self.path}")
             else:
                 raise ValueError(f"Given Database type attribute of {self.path.name} doesn't match database type, could be incorrect...\nGiven Database object type: {self.type}")
