@@ -12,7 +12,6 @@ class Database:
         self.type = str(type)
         self.suffix = self.path.suffix
         self.suffix_list = [".db", ".sqlite"]
-        #self.llm = Assistant("llama3.1", 0.5)
         self.file_exist = self._check_file()
         self.loaded_db = self._load_db()
         self.table_columns = self.loaded_db.get_usable_table_names()

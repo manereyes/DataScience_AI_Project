@@ -5,6 +5,8 @@ from pathlib import Path
 import sqlite3
 from logger.logger import generate_log
 import csv
+from datetime import datetime
+import uuid
 
 #####
 
@@ -14,8 +16,9 @@ class Assistant:
         self.model = model
         self.temp = temp
         self.llm = OllamaLLM(model=self.model, temperature=self.temp)
+        self.file_name = self._generate_filename()
 
-    def get_data(self, path: str, type: str, input: str, filename: str, output_type: str = 'csv') -> bool:
+    def get_data(self, path: str, type: str, input: str, output_type: str = 'csv') -> bool:
         """
         A method that receive various positional arguments to get data from a database and store it into a file (csv as default)
 
@@ -36,20 +39,20 @@ class Assistant:
         self.input = input
         self.column_names = self.database.table_columns
         self.output_type = output_type
-        self.filename = Path(filename)
+        #self.filename = Path(filename)
         self.data, self.csv_columns = self._retrieve_database(self.input, self.database, self.column_names)
 
         if self.output_type == 'csv':
             self.dir = Path("./data")
-            if self.dir.exists() == True:
-                absolute_path = str(str(self.dir)+'/'+str(self.filename)+'.'+self.output_type)
-            else:
+            absolute_path = f"{self.dir}/{self.file_name}.{self.output_type}"
+            if self.dir.exists() != True:
                 self.dir.mkdir(parents=True, exist_ok=True)
+                #absolute_path = str(str(self.dir)+'/'+str(self.filename)+'.'+self.output_type)
             with open(absolute_path, mode='w', newline='', encoding='utf-8',) as file:
                 writer = csv.writer(file)
                 writer.writerow(self.csv_columns)
                 writer.writerows(self.data)
-                generate_log(1, f"CSV File ({str(self.filename)}) created at {absolute_path}!")
+                generate_log(1, f"CSV File ({str(self.file_name)}) created at {self.dir}!")
         else:
             raise TypeError(f"{self.output_type} not supported as output type...")
         return True
@@ -72,11 +75,17 @@ class Assistant:
         generate_log(1, f"Data retrieved from Database {database.path}!")
         conn.close()
         return data, columns # a list of rows and the list of columns
+    
+    def _generate_filename(self):
+        file_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+        return file_name
+
+### This below will be erased aftermore
 
 path = "./database/olist.sqlite"
-filename = "pootis2"
+#filename = "pootis2"
 db_type = "sqlite"
-input = "Give me all the information about the order reviews"
+input = "Give me a list of the 100 most bought products"
 assistant = Assistant("Llama3.1", 0.5)
-assist_obj = assistant.get_data(path, db_type, input, filename)
+assist_obj = assistant.get_data(path, db_type, input)
 print(assist_obj)
